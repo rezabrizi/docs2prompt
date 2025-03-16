@@ -3,11 +3,15 @@ import sys
 import click
 import re
 
+from bs4 import BeautifulSoup
+import html2text
+
 # Global index used in XML serialization
 global_index = 0
-DOCS_FILE_NAMES = set(["readme.md", "readme.rst", "index.md", "docs.md", "readme.txt"])
+DOCS_FILE_NAMES = set(["readme.md", "readme.rst", "index.md", "docs.md", "readme.txt", "document.md"])
 QUALIFIED_EXTENSIONS = set([".md", ".mdx", ".txt", ".rst"])
 DOC_FOLDERS = set(["docs", "doc"])
+DOC_KW = set(["docs", "documentation", "guide", "doc"])
 
 def resolve_repo_identifier(repo_identifier, token=None):
     """
@@ -120,7 +124,7 @@ def get_documentation_files(owner, repo, token=None, full_repo=False):
                 file_resp = requests.get(file_url, headers=headers)
                 if file_resp.status_code == 200:
                     # For root README, adjust the key
-                    key = f"{repo}/{item["path"]}"
+                    key = f"{repo}/{(item["path"]).lower()}"
                     docs[key] = file_resp.text
 
     def recursive_search(path="", is_in_docs_folder=False):
@@ -136,26 +140,61 @@ def get_documentation_files(owner, repo, token=None, full_repo=False):
             elif item["type"] == "file":
                     process_file_item(item)
 
-    def check_for_linked_external_documentation_links():
-        # New heuristic: Check root README for external documentation links
+    
+    def try_get_external_doc_link(url):
+        try:
+            ext_resp = requests.get(url)
+            if ext_resp.status_code == 200:
+                # Use BeautifulSoup to parse the external HTML content
+                ext_soup = BeautifulSoup(ext_resp.text, 'html.parser')
+                # Remove unwanted tags like script and style
+                for tag in ext_soup(['script', 'style']):
+                    tag.decompose()
+                # Convert the HTML to markdown/plain text using html2text
+                h = html2text.HTML2Text()
+                h.ignore_links = False
+                text = h.handle(ext_soup.prettify())
+                docs[f"external:{url}"] = text
+        except Exception as e:
+            # Skip link if error occurs
+            pass
+
+    def get_markdown_links():
         readme_key = f"{repo}/readme.md"
+        doc_links = []
         if readme_key in docs:
             readme_content = docs[readme_key]
-            # Find all http/https links in the README
-            links = re.findall(r'(https?://[^\s)"\']+)', readme_content)
-            for link in links:
-                if "doc" in link.lower():
-                    try:
-                        ext_resp = requests.get(link)
-                        if ext_resp.status_code == 200:
-                            docs[f"external:{link}"] = ext_resp.text
-                    except Exception as e:
-                        # Skip link if error occurs
-                        pass
+            # Use regex to find markdown links: [link text](URL)
+            doc_links = re.findall(r'\[([^\]]+)\]\((https?://[^\)]+)\)', readme_content)
+        return doc_links
+    
+    def get_html_links():
+        readme_key = f"{repo}/readme.md"
+        doc_links = []
+        if readme_key in docs:
+            readme_content = docs[readme_key]
+            soup = BeautifulSoup(readme_content, 'html.parser')
+            
+            for a in soup.find_all('a'):
+                href = a.get('href')
+                link_text = a.get_text()
+                if href and href.startswith('http'):
+                    doc_links.append((link_text, href))
+        return doc_links
+        
 
+    def check_for_linked_external_documentation_links():
+        # New heuristic: Check root README for external documentation links with specific link text
+            links = get_html_links() + get_markdown_links()
+            for link_text, url in links:
+                # Check if the link text contains any of the keywords
+                doc_kw_in_link = any(kw in url.lower() for kw in DOC_KW)
+                doc_kw_in_text = any(kw in link_text.lower() for kw in DOC_KW)
+                if doc_kw_in_link or doc_kw_in_text:
+                    try_get_external_doc_link(url)
+                    
     recursive_search()
     check_for_linked_external_documentation_links()
-    
     return docs
 
 
