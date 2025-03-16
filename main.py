@@ -97,74 +97,58 @@ def get_documentation_files(owner, repo, token=None, full_repo=False):
             raise Exception(f"Error {response.status_code}: {response.text}")
         return response.json()
 
-    def recurse(path=""):
+    def process_file_item(item):
+        filename = item["name"].lower()
+        # Define qualified extensions
+        qualified_extensions = [".md", ".mdx", ".txt", ".rst"]
+        # Check if file name matches specific known documentation names
+        is_explicit_doc = filename in ["readme.md", "readme.rst", "index.md", "docs.md", "readme.txt"]
+
+        # Check heuristic: if any directory in the path is named 'docs'
+        path_parts = item["path"].split("/")
+        parent_dirs = path_parts[:-1]  # exclude the filename
+        has_docs_dir = any(part.lower() in ["docs", "doc"] for part in parent_dirs)
+
+        # Check if file has one of the qualified extensions
+        has_qualified_extension = any(filename.endswith(ext) for ext in qualified_extensions)
+
+        if is_explicit_doc or (has_docs_dir and has_qualified_extension):
+            file_url = item.get("download_url")
+            if file_url:
+                file_resp = requests.get(file_url, headers=headers)
+                if file_resp.status_code == 200:
+                    # For root README, adjust the key
+                    if item["path"].count("/") == 0 and filename.startswith("readme"):
+                        key = f"{repo}/readme.md"
+                    else:
+                        key = item["path"]
+                    docs[key] = file_resp.text
+
+    def full_recursive_search(path=""):
         items = fetch_path(path)
         for item in items:
             if item["type"] == "dir":
-                # In full recursion, traverse all directories
-                recurse(item["path"])
+                full_recursive_search(item["path"])
             elif item["type"] == "file":
-                filename = item["name"].lower()
-                # Define qualified extensions
-                qualified_extensions = [".md", ".mdx", ".txt", ".rst"]
-                # Check if file name matches specific known documentation names
-                is_explicit_doc = filename in ["readme.md", "readme.rst", "index.md", "docs.md", "readme.txt"]
+                process_file_item(item)
 
-                # Check heuristic: if any directory in the path is named 'docs'
-                path_parts = item["path"].split("/")
-                parent_dirs = path_parts[:-1]  # exclude the filename
-                has_docs_dir = any(part.lower() == "docs" for part in parent_dirs)
-
-                # Check if file has one of the qualified extensions
-                has_qualified_extension = any(filename.endswith(ext) for ext in qualified_extensions)
-
-                if is_explicit_doc or (has_docs_dir and has_qualified_extension):
-                    file_url = item.get("download_url")
-                    if file_url:
-                        file_resp = requests.get(file_url, headers=headers)
-                        if file_resp.status_code == 200:
-                            # For root README, adjust the key
-                            if item["path"].count("/") == 0 and filename.startswith("readme"):
-                                key = f"{repo}/readme.md"
-                            else:
-                                key = item["path"]
-                            docs[key] = file_resp.text
-        return
-
-    if full_repo:
-        # Full recursive search of the entire repository
-        try:
-            recurse("")
-        except Exception as e:
-            raise e
-    else:
-        # Non-full search: only inspect root and the 'docs' directory at root if it exists
-        try:
-            root_items = fetch_path("")
-        except Exception as e:
-            raise e
-
-        # Process files in root
+    def non_full_search():
+        # Process root items
+        root_items = fetch_path("")
         for item in root_items:
             if item["type"] == "file":
                 filename = item["name"].lower()
                 if filename in ["readme.md", "readme.rst", "index.md", "docs.md", "readme.txt"]:
-                    file_url = item.get("download_url")
-                    if file_url:
-                        file_resp = requests.get(file_url, headers=headers)
-                        if file_resp.status_code == 200:
-                            # For root README, adjust the key
-                            if item["path"].count("/") == 0 and filename.startswith("readme"):
-                                key = f"{repo}/readme.md"
-                            else:
-                                key = item["path"]
-                            docs[key] = file_resp.text
-            elif item["type"] == "dir" and item["name"].lower() == "docs":
+                    process_file_item(item)
+            elif item["type"] == "dir" and item["name"].lower() in ["docs", "doc"] :
                 # Recursively search within the 'docs' directory
-                try:
-                    recurse(item["path"])
-                except Exception as e:
-                    raise e
+                full_recursive_search(item["path"])
+
+    if full_repo:
+        full_recursive_search("")
+    else:
+        non_full_search()
+
     return docs
 
 
@@ -173,7 +157,7 @@ def get_documentation_files(owner, repo, token=None, full_repo=False):
 @click.option('--token', default=None, help='GitHub auth token')
 @click.option('--format', 'output_format', type=click.Choice(['default', 'xml', 'markdown']), default='default', help='Output format: default, xml, markdown')
 @click.option('--output', default=None, help='Output file name to write the serialized docs')
-@click.option('--full_repo', is_flag=True, help='Perform a full recursive search of the repository')
+@click.option('--full_repo', is_flag=True, help='Perform a full recursive search of the repository', default=False)
 def main(repo, token, output_format, output, full_repo):
     """
     Doc-to-Prompt CLI: Extracts documentation from a GitHub repository and serializes it in a specified format.
