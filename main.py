@@ -1,10 +1,13 @@
 import requests
 import sys
 import click
+import re
 
 # Global index used in XML serialization
 global_index = 0
-
+DOCS_FILE_NAMES = set(["readme.md", "readme.rst", "index.md", "docs.md", "readme.txt"])
+QUALIFIED_EXTENSIONS = set([".md", ".mdx", ".txt", ".rst"])
+DOC_FOLDERS = set(["docs", "doc"])
 
 def resolve_repo_identifier(repo_identifier, token=None):
     """
@@ -81,6 +84,7 @@ def serialize_docs(doc_dict, output_format="default"):
     return "\n".join(output_lines)
 
 
+
 def get_documentation_files(owner, repo, token=None, full_repo=False):
     headers = {"Accept": "application/vnd.github.v3+json"}
     if token:
@@ -99,18 +103,16 @@ def get_documentation_files(owner, repo, token=None, full_repo=False):
 
     def process_file_item(item):
         filename = item["name"].lower()
-        # Define qualified extensions
-        qualified_extensions = [".md", ".mdx", ".txt", ".rst"]
         # Check if file name matches specific known documentation names
-        is_explicit_doc = filename in ["readme.md", "readme.rst", "index.md", "docs.md", "readme.txt"]
+        is_explicit_doc = filename in DOCS_FILE_NAMES
 
         # Check heuristic: if any directory in the path is named 'docs'
         path_parts = item["path"].split("/")
         parent_dirs = path_parts[:-1]  # exclude the filename
-        has_docs_dir = any(part.lower() in ["docs", "doc"] for part in parent_dirs)
+        has_docs_dir = any(part.lower() in DOC_FOLDERS for part in parent_dirs)
 
         # Check if file has one of the qualified extensions
-        has_qualified_extension = any(filename.endswith(ext) for ext in qualified_extensions)
+        has_qualified_extension = any(filename.endswith(ext) for ext in QUALIFIED_EXTENSIONS)
 
         if is_explicit_doc or (has_docs_dir and has_qualified_extension):
             file_url = item.get("download_url")
@@ -118,37 +120,42 @@ def get_documentation_files(owner, repo, token=None, full_repo=False):
                 file_resp = requests.get(file_url, headers=headers)
                 if file_resp.status_code == 200:
                     # For root README, adjust the key
-                    if item["path"].count("/") == 0 and filename.startswith("readme"):
-                        key = f"{repo}/readme.md"
-                    else:
-                        key = item["path"]
+                    key = f"{repo}/{item["path"]}"
                     docs[key] = file_resp.text
 
-    def full_recursive_search(path=""):
+    def recursive_search(path="", is_in_docs_folder=False):
         items = fetch_path(path)
         for item in items:
+            item_name_lower = item["name"].lower()
             if item["type"] == "dir":
-                full_recursive_search(item["path"])
+                if full_repo or is_in_docs_folder:
+                    recursive_search(item["path"], is_in_docs_folder)
+                if item_name_lower in DOC_FOLDERS: 
+                    print(item["path"])
+                    recursive_search(item["path"], True)
             elif item["type"] == "file":
-                process_file_item(item)
-
-    def non_full_search():
-        # Process root items
-        root_items = fetch_path("")
-        for item in root_items:
-            if item["type"] == "file":
-                filename = item["name"].lower()
-                if filename in ["readme.md", "readme.rst", "index.md", "docs.md", "readme.txt"]:
                     process_file_item(item)
-            elif item["type"] == "dir" and item["name"].lower() in ["docs", "doc"] :
-                # Recursively search within the 'docs' directory
-                full_recursive_search(item["path"])
 
-    if full_repo:
-        full_recursive_search("")
-    else:
-        non_full_search()
+    def check_for_linked_external_documentation_links():
+        # New heuristic: Check root README for external documentation links
+        readme_key = f"{repo}/readme.md"
+        if readme_key in docs:
+            readme_content = docs[readme_key]
+            # Find all http/https links in the README
+            links = re.findall(r'(https?://[^\s)"\']+)', readme_content)
+            for link in links:
+                if "doc" in link.lower():
+                    try:
+                        ext_resp = requests.get(link)
+                        if ext_resp.status_code == 200:
+                            docs[f"external:{link}"] = ext_resp.text
+                    except Exception as e:
+                        # Skip link if error occurs
+                        pass
 
+    recursive_search()
+    check_for_linked_external_documentation_links()
+    
     return docs
 
 
