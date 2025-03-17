@@ -42,9 +42,9 @@ def print_path(writer, path, content, output_format):
         print_as_xml(writer, path, content)
     elif output_format == "markdown":
         writer(f"## {path}")
-        writer("---")
+        writer("```markdown")
         writer(content)
-        writer("---")
+        writer("```")
     else:
         print_default(writer, path, content)
 

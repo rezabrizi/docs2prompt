@@ -1,13 +1,15 @@
-# docs2prompt
+# docs2prompt 📜→🤖
+[![PyPI](https://img.shields.io/pypi/v/files-to-prompt.svg)](https://pypi.org/project/docs2prompts/)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/rezabrizi/docs2prompt/blob/master/LICENSE)
 
 Fetch open-sourced documentation from Github or closed-sourced documentation from publisher website to put into a LLM-friendly format in one file for use with LLMs.
 
 ## Features
 
-- **GitHub Integration:** Extracts documentation files (e.g., README.md, files within a `docs/` folder) from a GitHub repository.
+- **GitHub Integration:** Extracts documentation files (e.g., README.md, docs.md, files within a `docs/` folder) from a GitHub repository using heuristics.
 - **External Documentation Heuristic:** Optionally, fetches and converts external documentation links found in the root README.
 - **URL Crawling:** Supports crawling a top-level documentation URL for content.
-- **Customizable Output:** Serialize documentation in various formats (default plain text, XML, or Markdown).
+- **Customizable Output:** Serialize documentation in various formats (default plain text, XML, or Markdown). 
 - **CLI and API:** Use as an importable Python package or as a standalone command-line tool.
 
 ## Installation
@@ -18,7 +20,7 @@ You can install **docs2prompt** directly from PyPI:
 
 Alternatively, clone the repository and install locally:
 
-    git clone https://github.com/yourusername/docs2prompt.git
+    git clone https://github.com/rezabrizi/docs2prompt.git
     cd docs2prompt
     pip install .
 
@@ -33,11 +35,12 @@ After installing, you can run the tool via the command line.
     docs2prompt --repo owner/repo --token YOUR_GITHUB_TOKEN --format markdown --full_repo --external_documentation --output docs.txt
 
 - `--repo`: GitHub repository in the format `owner/repo` (required if not using `--url`).
-- `--token`: GitHub authentication token (only used if `--repo` is provided).
+- `--token`: Your GitHub authentication token (only used if `--repo` is provided) - HIGHLY RECOMMENDED as without a token you can make at most 60 requests  per hour which easily gets reached with 1 query.
+- `--repo`: Documentation page url (required if not using `--repo`).
 - `--format`: Output format (`default`, `xml`, or `markdown`).
 - `--output`: File name to write the serialized documentation.
-- `--full_repo`: Performs a full recursive search of the repository.
-- `--external_documentation`: Enables external documentation heuristic to fetch linked external docs from the root README.
+- `--full_repo`: Performs a full recursive search of the repository. Having this as True will cause the query to take longer to finish.
+- `--external_documentation`: Enables external documentation heuristic to fetch linked external docs from the root README. Having this as True will cause the query to take longer to finish.
 
 **Example using a documentation URL:**
 
@@ -48,16 +51,15 @@ After installing, you can run the tool via the command line.
 ### As a Python Package
 
 You can also import **docs2prompt** as a module in your own Python code:
+```Python
+from docs2prompt import get_github_documentation
 
-    from docs2prompt.github import get_documentation_files_from_github
-    from docs2prompt.utils import serialize_docs
 
-    owner = "owner"
-    repo = "repo"
-    token = "YOUR_GITHUB_TOKEN"
-    docs = get_documentation_files_from_github(owner, repo, token, full_repo=True, external_documentation=True)
-    output_content = serialize_docs(docs, output_format="markdown")
-    print(output_content)
+repo_id = "owner/repo"
+token = "YOUR_GITHUB_TOKEN" # Although optional, Highly recommended
+content = get_github_documentation(repo_id, token, full_repo=False, external_documentation=False, output_format="XML")
+print(output_content)
+```
 
 ## Contributing
 
@@ -77,4 +79,4 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## Contact
 
-For any questions or suggestions, please open an issue on the [GitHub repository](https://github.com/yourusername/docs2prompt).
+For any questions or suggestions, please open an issue on the [GitHub repository](https://github.com/rezabrizi/docs2prompt).

@@ -104,7 +104,8 @@ def get_documentation_files_from_github(
             # Check if the link or text contains any of the keywords
             doc_kw_in_link = any(kw in url.lower() for kw in DOC_KW)
             doc_kw_in_text = any(kw in link_text.lower() for kw in DOC_KW)
-            if doc_kw_in_link or doc_kw_in_text:
+            
+            if repo in url and (doc_kw_in_link or doc_kw_in_text):
                 web_docs = fetch_top_level_documentation(url, seen_links)
                 docs.update(web_docs)
 
