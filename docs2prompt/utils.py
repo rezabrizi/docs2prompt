@@ -41,10 +41,13 @@ def print_path(writer, path, content, output_format):
     if output_format == "xml":
         print_as_xml(writer, path, content)
     elif output_format == "markdown":
+        backticks = "```"
+        while backticks in content:
+            backticks += "`"
         writer(f"## {path}")
-        writer("```markdown")
+        writer(f"{backticks}")
         writer(content)
-        writer("```")
+        writer(f"{backticks}")
     else:
         print_default(writer, path, content)
 

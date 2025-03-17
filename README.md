@@ -1,6 +1,6 @@
 # docs2prompt 📜→🤖
 [![PyPI](https://img.shields.io/pypi/v/files-to-prompt.svg)](https://pypi.org/project/docs2prompts/)
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/rezabrizi/docs2prompt/blob/master/LICENSE)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/rezabrizi/docs2prompt/blob/main/LICENSE)
 
 Fetch open-sourced documentation from Github or closed-sourced documentation from publisher website to put into a LLM-friendly format in one file for use with LLMs.
 
