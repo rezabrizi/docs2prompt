@@ -61,6 +61,10 @@ content = get_github_documentation(repo_id, token, full_repo=False, external_doc
 print(output_content)
 ```
 
+### Example Usage
+![Example Usage](https://i.imgur.com/jKZIjQO.png)
+
+
 ## Contributing
 
 Contributions are welcome! If you'd like to contribute:
