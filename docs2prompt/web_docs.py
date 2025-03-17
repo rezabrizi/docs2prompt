@@ -22,7 +22,6 @@ def get_links(base_url):
 
 
 def extract_text(url):
-    """Fetch a URL and extract its text content."""
     response = requests.get(url)
     if response.status_code != 200:
         raise Exception
