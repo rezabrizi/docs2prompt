@@ -2,8 +2,7 @@
 [![PyPI](https://img.shields.io/badge/pypi-v0.1.4-orange.svg)](https://pypi.org/project/docs2prompt/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/rezabrizi/docs2prompt/blob/main/LICENSE)
 
-![Gif showing the crawl run](https://s6.gifyu.com/images/bzStA.gif)
-
+[![Demo CountPages alpha](https://s6.gifyu.com/images/bzStA.gif)]()
 
 Fetch open-sourced documentation from Github or closed-sourced documentation from publisher website to put into a LLM-friendly format in one file for use with LLMs.
 
