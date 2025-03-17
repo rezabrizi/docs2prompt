@@ -1,7 +1,7 @@
 import requests
 
-from .utils import get_html_links, get_markdown_links
-from .web_docs import fetch_top_level_documentation
+from docs2prompt.utils import get_html_links, get_markdown_links
+from docs2prompt.web_docs import fetch_top_level_documentation
 
 DOCS_FILE_NAMES = set(
     [

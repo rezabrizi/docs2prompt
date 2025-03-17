@@ -17,3 +17,7 @@ dependencies = [
 
 [project.scripts]
 docs2prompt = "docs2prompt.main:main"
+
+
+[tool.uv]
+package = true

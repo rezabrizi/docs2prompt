@@ -1,6 +1,6 @@
 # docs2prompt
 
-**docs2prompt** is a command-line tool and Python package that converts software documentation into a prompt-friendly format for LLMs. It extracts documentation from GitHub repositories or crawls a documentation website URL, then serializes the content into formats such as plain text, XML, or Markdown. This makes it easy to provide context to LLMs when working with large codebases or external documentation.
+Fetch open-sourced documentation from Github or closed-sourced documentation from publisher website to put into a LLM-friendly format in one file for use with LLMs.
 
 ## Features
 

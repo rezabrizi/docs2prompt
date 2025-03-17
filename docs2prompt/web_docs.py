@@ -1,7 +1,6 @@
-import requests
 from bs4 import BeautifulSoup
 import html2text
-
+import requests
 from urllib.parse import urljoin
 
 def get_links(base_url):

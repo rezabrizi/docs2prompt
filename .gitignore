@@ -15,6 +15,7 @@ logs/
 # Package builds
 build/
 dist/
+build/
 *.egg-info/
 pip-wheel-metadata/
 
