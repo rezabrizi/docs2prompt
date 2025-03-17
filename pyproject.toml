@@ -1,13 +1,19 @@
 [project]
-name = "document-to-prompt"
-version = "0.1.0"
-description = "Add your description here"
+name = "docs2prompt"
+version = "0.3.0"
+description = "Convert software documentation to prompt for LLMs"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "beautifulsoup4>=4.13.3",
     "click>=8.1.8",
     "html2text>=2024.2.26",
-    "ipykernel>=6.29.5",
     "requests (>=2.32.3,<3.0.0)",
+    "setuptools>=76.0.0",
 ]
+
+[project.urls]
+"Homepage" = "https://github.com/rezabrizi/docs2prompt"
+
+[project.scripts]
+docs2prompt = "docs2prompt.main:main"

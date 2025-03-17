@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 global_index = 0
 
 def get_markdown_links(content):
-    """Use regex to find markdown links: [link text](URL)"""
     doc_links = re.findall(r'\[([^\]]+)\]\((https?://[^\)]+)\)', content)
     return doc_links
 

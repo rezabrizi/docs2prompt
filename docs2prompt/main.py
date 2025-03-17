@@ -1,7 +1,7 @@
 import click
-from utils import serialize_docs
-from github import resolve_repo_identifier, get_documentation_files_from_github
-from web_docs import fetch_top_level_documentation
+from .utils import serialize_docs
+from .github import resolve_repo_identifier, get_documentation_files_from_github
+from .web_docs import fetch_top_level_documentation
 
 @click.command()
 @click.option('--repo', default=None, help='GitHub repository in the format owner/repo')

@@ -1,12 +1,32 @@
 import requests
 
-from utils import get_html_links, get_markdown_links
-from web_docs import fetch_top_level_documentation
+from .utils import get_html_links, get_markdown_links
+from .web_docs import fetch_top_level_documentation
 
-DOCS_FILE_NAMES = set(["readme.md", "readme.rst", "index.md", "docs.md", "readme.txt", "document.md"])
+DOCS_FILE_NAMES = set(
+    [
+        "readme.md",
+        "readme.mdx",
+        "readme.rst",
+        "readme.txt",
+        "index.md",
+        "index.mdx",
+        "index.rst",
+        "index.txt",
+        "docs.md",
+        "docs.mdx",
+        "docs.rst",
+        "docs.txt",
+        "document.md",
+        "document.mdx",
+        "document.rst",
+        "document.txt",
+    ]
+)
 QUALIFIED_EXTENSIONS = set([".md", ".mdx", ".txt", ".rst"])
-DOC_FOLDERS = set(["docs", "doc"])
+DOC_FOLDERS = set(["docs", "doc", "documentation"])
 DOC_KW = set(["docs", "documentation", "guide", "doc"])
+
 
 def resolve_repo_identifier(repo_identifier, token=None):
     """
@@ -18,7 +38,10 @@ def resolve_repo_identifier(repo_identifier, token=None):
     owner, repo = repo_identifier.split("/", 1)
     return owner, repo
 
-def get_documentation_files_from_github(owner, repo, token=None, full_repo=False, external_documentation=False):
+
+def get_documentation_files_from_github(
+    owner, repo, token=None, full_repo=False, external_documentation=False
+):
     headers = {"Accept": "application/vnd.github.v3+json"}
     if token:
         headers["Authorization"] = f"token {token}"
@@ -36,23 +59,23 @@ def get_documentation_files_from_github(owner, repo, token=None, full_repo=False
 
     def process_file_item(item):
         filename = item["name"].lower()
-        # Check if file name matches specific known documentation names
         is_explicit_doc = filename in DOCS_FILE_NAMES
 
-        # Check heuristic: if any directory in the path is named 'docs'
+        # heuristic: if any directory in the path is named 'docs'
         path_parts = item["path"].split("/")
         parent_dirs = path_parts[:-1]  # exclude the filename
         has_docs_dir = any(part.lower() in DOC_FOLDERS for part in parent_dirs)
 
         # Check if file has one of the qualified extensions
-        has_qualified_extension = any(filename.endswith(ext) for ext in QUALIFIED_EXTENSIONS)
+        has_qualified_extension = any(
+            filename.endswith(ext) for ext in QUALIFIED_EXTENSIONS
+        )
 
         if is_explicit_doc or (has_docs_dir and has_qualified_extension):
             file_url = item.get("download_url")
             if file_url:
                 file_resp = requests.get(file_url, headers=headers)
                 if file_resp.status_code == 200:
-                    # For root README, adjust the key
                     key = f"{repo}/{(item["path"]).lower()}"
                     docs[key] = file_resp.text
 
@@ -61,17 +84,18 @@ def get_documentation_files_from_github(owner, repo, token=None, full_repo=False
         for item in items:
             item_name_lower = item["name"].lower()
             if item["type"] == "dir":
-                if full_repo or is_in_docs_folder:       
+                if full_repo or is_in_docs_folder:
                     recursive_search(item["path"], is_in_docs_folder)
-                if item_name_lower in DOC_FOLDERS: 
+                if item_name_lower in DOC_FOLDERS:
                     recursive_search(item["path"], True)
-            elif item["type"] == "file":    
-                    process_file_item(item)
+            elif item["type"] == "file":
+                process_file_item(item)
 
     def check_for_linked_external_documentation_links():
-        # New heuristic: Check root README for external documentation links with specific link text
+        # heuristic: Check root README for external documentation links with specific link text
         readme_key = f"{repo}/readme.md"
-        if readme_key not in docs: return
+        if readme_key not in docs:
+            return
         readme_content = docs[readme_key]
         seen_links = set()
 
@@ -84,8 +108,6 @@ def get_documentation_files_from_github(owner, repo, token=None, full_repo=False
                 web_docs = fetch_top_level_documentation(url, seen_links)
                 docs.update(web_docs)
 
-
-                
     recursive_search()
     if external_documentation:
         check_for_linked_external_documentation_links()
