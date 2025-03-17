@@ -1,3 +1,5 @@
+from typing import Optional
+
 from docs2prompt.github import get_documentation_files_from_github, resolve_repo_identifier
 from docs2prompt.utils import serialize_docs
 from docs2prompt.web_docs import fetch_top_level_documentation
@@ -5,7 +7,7 @@ from docs2prompt.web_docs import fetch_top_level_documentation
 
 def get_github_documentation(
     repo_identification: str,
-    token: str,
+    token: Optional[str] = None,
     full_repo: bool = False,
     external_documentation: bool = False,
     output_format: str = "default",
