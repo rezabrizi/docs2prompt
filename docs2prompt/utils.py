@@ -44,7 +44,7 @@ def print_path(writer, path, content, output_format):
         backticks = "```"
         while backticks in content:
             backticks += "`"
-        writer(f"## {path}")
+        writer(f"{path}")
         writer(f"{backticks}")
         writer(content)
         writer(f"{backticks}")
