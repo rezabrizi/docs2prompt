@@ -1,0 +1,27 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+
+
+# Virtual environment
+.venv
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Logs
+logs/
+*.log
+
+# Package builds
+build/
+dist/
+*.egg-info/
+pip-wheel-metadata/
+
+
+# PyCharm settings
+.idea/
+
+# OS-specific files
+.DS_Store
+
